@@ -1,0 +1,39 @@
+#!/bin/bash
+
+usage()
+{
+cat <<END
+usage :
+	`basename $0` <lac> <cell_id> [mnc]
+params:
+	lac/cell_id : hex format
+	mnc : 0 : cmcc , 1:unicc , sid: telcc
+
+readme:
+
+查询全国移动联通电信2G/3G/4G基站位置数据，收录数据总量超过8000万条
+所有免费接口禁止从移动设备端直接访问，请使用固定IP的服务器转发请求。
+每5分钟限制查询300次，基站/WIFI/经纬度查询接口每日限制查询1000次，反向基站查询接口每日限制查询100次，混合定位接口每日限制查询100次，如需更多服务请联系 service@cellocation.com, QQ 3372218865
+
+reference_url:
+	http://www.cellocation.com/interfac/
+requirement:
+ - jq ,  commandline JSON processor , options choice
+ - curl ,  send get/post request to the url server, and get the reponse data
+END
+}
+
+if [ "$#" != "2" ] ; then
+	usage
+	exit 0
+fi
+mcc="460"
+
+lac=`printf %d "0x$1"`
+cellid=`printf %d "0x$2"`
+mnc=${3:-"0"}
+
+my_proxy="127.0.0.1:1080"
+
+curl --socks5 ${my_proxy}  "http://api.cellocation.com/cell/?mcc=${mcc}&mnc=${mnc}&lac=${lac}&ci=${cellid}&output=json" | jq
+
