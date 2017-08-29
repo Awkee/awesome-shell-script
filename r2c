@@ -1,0 +1,72 @@
+#!/bin/bash
+
+usage()
+{
+cat <<END
+Usage:
+	将<data_column_number>列数据按照[mode]展示为行列数据
+
+	`basename $0` [mode] <data_column_number>  <file_list>
+Params:
+	mode: 默认为第一列作为列，第二列作为行模式，如果设置为r 则对调此行列模式.
+	<data_column_number> : 为数据列所在列数
+	<file_list> : 需要展示的数据文件
+
+END
+}
+
+
+mode="0" ## 行列模式
+data_column="3"  ##默认列数据所在的列数
+
+if [ "$#" = "0" ] ; then
+	usage
+	exit 0
+fi
+
+if [ "$1" = "r" ] ; then
+	mode="r"
+	shift
+fi
+
+if [ "$1" -gt 2 -o "$1" -lt 30 ] ; then
+	data_column="$1"
+	shift
+fi
+
+awk -v data_col=${data_column} -v mode=${mode} '{
+
+	if ( mode != "r" )
+	{
+		v1 = $1;
+		v2 = $2;
+	}
+	else
+	{
+		v1 = $2;
+		v2 = $1;
+	}
+        type[ v1 ] ++;
+        day[ v2 ]  ++;
+
+        i=v1" "v2;
+
+        tot[ i ] += $data_col;
+}END{
+        printf("date");
+        for( j in type )
+                printf(" %s", j );
+        printf("\n");
+
+        for( i in day)
+        {
+                printf("%s ",i);
+                for( j in type )
+                {
+                        idx=j" "i;
+                        printf(" %.0f", tot[idx]) 
+                }
+                printf("\n") 
+        } 
+}' $@
+
