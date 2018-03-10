@@ -14,7 +14,7 @@ cat <<END
 
 		`basename $0` [ -s session_id ]  [-t oper_type ] [ -o out_file] [-f filter ] cap_file ....
 			-s session_id : 会话ID，确保用双引号或者单引号括起来，因为session_id经常会带分号";"等特殊符号。
-			-t oper_type  : 操作类型, 默认为show,取值有: show:展示关键dcc字段信息/sum: 汇总每个session_id流量使用总和/detail:比show展示的消息更详细，按照AVP列模式展示，通常用来展示单个消息明细
+			-t oper_type  : 操作类型, 取值范围:show/detail/sum/cer/dwr ,  默认为show,取值有: show:展示关键dcc字段信息/sum: 汇总每个session_id流量使用总和/detail:比show展示的消息更详细，按照AVP列模式展示，通常用来展示单个消息明细, cer/dwr/
 			-o out_file   : 设置输出文件名,不携带cap文件名后缀
 			-f filter     : 设置过滤条件, 比如 : -f 'Origin-Host == \"abc.com\" ' 等。
 
@@ -69,7 +69,7 @@ if [ "$#" = "0" ] ; then
 fi
 
 ##识别diameter协议的端口范围
-port_address="1024-20000"
+port_address="1024-65535"
 dcc_field_list="272,Session-Id,Origin-Host,3GPP-Charging-Id,CC-Request-Type,CC-Request-Number,Subscription-Id-Data,Event-Timestamp,Result-Code,Rating-Group,CC-Total-Octets,CC-Input-Octets,CC-Output-Octets,3GPP-Reporting-Reason,3GPP-Charging-Id,3GPP-Charging-Characteristics,3GPP-RAT-Type,3GPP-User-Location-Info"
 
 i=1
@@ -89,7 +89,7 @@ do
 			else
 				${run_cmd}
 			fi
-		}
+		} | awk -v filename=${cap_file} '{ print filename,$0 }'
 		;;
 		sum )
 		{
@@ -126,7 +126,16 @@ do
         }'
 		;;
 		detail)
-			tshark -r $cap_file -d tcp.port==${port_address},diameter -V ${str_filter} | grep 'AVP: '
+			tshark ${str_options} -r $cap_file -d tcp.port==${port_address},diameter -V ${str_filter} | egrep --color 'Command Code|Response|AVP:|^Diameter|^Internet|^Transmission'
+		;;
+		rr)
+			tshark ${str_options} -r $cap_file -d tcp.port==${port_address},diameter -V ${str_filter} | egrep --color 'Command Code|Response|^Diameter|^Internet|^Transmission|872|AVP: Trigger'
+		;;
+		cer)
+			tshark ${str_options} -r $cap_file -d tcp.port==${port_address},diameter  -V 'diameter.cmd.code == 257' | egrep --color 'Command Code|Response|AVP:|^Diameter|^Internet|^Transmission'
+		;;
+		dwr)
+			tshark ${str_options} -r $cap_file -d tcp.port==${port_address},diameter -V -q -z diameter,avp,280 | egrep --color 'Command Code|Response|AVP:|^Diameter|^Internet|^Transmission'
 		;;
 		*)
 		usage ;;
