@@ -10,7 +10,13 @@
 >一个用于将行数据转置为行列数据合并展示，行列位置可选
 
 ## autoss.py
->自己临时备用的shadowsocks代理脚本.
+>shadowsocks自动配置脚本，可以使用二维码URL地址也可以识别ss-uri地址作为参数解析
+
+## autossr.py
+> shadowsocksR自动配置脚本，可以使用二维码URL地址也可以识别ssr-uri地址作为参数解析
+
+使用方法:
+结合 ssr脚本使用 
 
 ## tsk.dcc
 > tshark 命令分析DCC消息的脚本工具。
@@ -46,4 +52,3 @@ echo 'export PATH="$PATH:~/bin:."' >> ~/.bashrc
 重启ss服务: `autoss.py -d restart`
 
 指定shadowsocks二维码URL地址并重启方法: `autoss.py  -d restart http://xxxx/qr/abc.png`
-
