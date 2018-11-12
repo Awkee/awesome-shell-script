@@ -18,13 +18,10 @@ if __name__ == '__main__':
 	file_path = os.path.dirname(os.path.realpath(inspect.getfile(inspect.currentframe())))
 	sys.path.insert(0, os.path.join(file_path, '../'))
 
-import wget
 import argparse
 import atexit
 import json
-import zbar
 import base64
-from PIL import Image
 from shadowsocks.local import main 
 from urlparse import urlparse, parse_qs
 
@@ -38,30 +35,10 @@ def get_parser():
 	parser.add_argument("-p", "--pid-file" , nargs = '?' , default = '/tmp/ssr.pid' , help = 'pid file for daemon mode')
 	parser.add_argument("-l", "--log-file" , nargs = '?' , default = '/tmp/ssr.log' , help = 'log file for daemon mode')
 	parser.add_argument("-q", "--quiet-mode" ,  action = 'store_false' ,  help = 'quiet mode, only show warnings/errors')
-	parser.add_argument("ss_qrcode_url", nargs = '?' , default = 'ssr://', help = 'shadowsocks qrcode png image url, eg. http://ss.ishadowx.com/img/qr/jpaxxoo.png . choices:[us|sg|jp][abc]. ssr-uri' )
+	parser.add_argument("ss_qrcode_url", nargs = '?' , default = 'ssr://MTU5Ljg5LjE1My4xNjA6NTA2NzpvcmlnaW46YWVzLTI1Ni1jZmI6cGxhaW46YVM1M2RYY3VjbVZrLz9vYmZzcGFyYW09JnByb3RvcGFyYW09JnJlbWFya3M9UkUxOFdGaDhXRmc2TVRjJmdyb3VwPWQzZDNMbk56Y25Ob1lYSmxMbU52YlE', help = 'shadowsocks qrcode png image url, eg. http://ss.ishadowx.com/img/qr/jpaxxoo.png . choices:[us|sg|jp][abc]. ssr-uri' )
+	### ssr://NDUuMzIuMTc0LjEzOjgwOmF1dGhfc2hhMV92NDphZXMtMjU2LWN0cjpwbGFpbjpNWEZoZWpKM2MzZ3paV1JqSkZKR1Zn
+	### ssr://MTU5Ljg5LjE1My4xNjA6NTA2NzpvcmlnaW46YWVzLTI1Ni1jZmI6cGxhaW46YVM1M2RYY3VjbVZrLz9vYmZzcGFyYW09JnByb3RvcGFyYW09JnJlbWFya3M9UkUxOFdGaDhXRmc2TVRjJmdyb3VwPWQzZDNMbk56Y25Ob1lYSmxMbU52YlE
 	return parser.parse_args()
-
-def decode_qrcode( qrcode_file):
-	'''
-	decode the qrcode png image file,then return the image object result
-	'''
-	if  os.path.isfile( qrcode_file ) :
-		# create a scanner
-		scanner = zbar.ImageScanner()
-		# configurue the reader
-		scanner.parse_config('enable')
-		# obtain the image data
-		pil = Image.open( qrcode_file ).convert('L')
-		width, height = pil.size
-		raw = pil.tobytes()
-		# wrap image data
-		image = zbar.Image(width, height, 'Y800', raw)
-		# scan the image for barcodes
-		scanner.scan(image)
-	else:
-		print("qrcode image fil[{}] is not a file .".format(qrcode_file))
-
-	return image
 
 def b64pading(enc):
 	'''
@@ -83,7 +60,18 @@ def decode_ssr_uri( ssr_uri_string ):
 	if( ssr_uri_string.startswith( ssr_prefix ) ):
 		ssr_encode_string = ssr_uri_string[ssr_prefix_len:]
 	print("ssr_encode_string:{0}".format(ssr_encode_string))
-	ssr_decode_string = base64.decodestring( b64pading(ssr_encode_string) )
+	## split different part of params ###
+	ssr_split_array = ssr_encode_string.split('_')
+	print("ssr_split_array:len:{0}".format(len(ssr_split_array)))
+	if len(ssr_split_array) == 2 :
+		i1_ssr = base64.decodestring( b64pading( ssr_split_array[0] ) );
+		i2_ssr = base64.decodestring( b64pading( ssr_split_array[1] ) );
+		ssr_decode_string = "{0}?obfsparam={1}".format( i1_ssr , i2_ssr) 
+	else :
+		ssr_decode_string = base64.decodestring( b64pading(ssr_encode_string) )
+
+	print("ssr_decode_string:{0}".format(ssr_decode_string))
+
 	
 	ssr_decode_string = ssr_prefix + ssr_decode_string
 	ssr_params=parse_qs(urlparse(ssr_decode_string).query)
@@ -104,7 +92,7 @@ def decode_ssr_uri( ssr_uri_string ):
 
 	conf_json['fast_open'] = False
 	conf_json['local_address'] = '0.0.0.0'
-	conf_json['local_port'] = 1081 
+	conf_json['local_port'] = 1080 
 	conf_json['timeout'] = 600
 	conf_json['udp_timeout'] = 60
 	conf_json['dns_ipv6'] = False
@@ -129,28 +117,18 @@ def main_task():
 	args = get_parser()
 
 	## get the  qrcode url address 
-	if args.ss_qrcode_url in [ "usa", "usb","usc" , "jpa" , "jpb", "jpc" , "sga" , "sgb" , "sgc" ] :
-		ss_url = default_url_pattern.format( args.ss_qrcode_url )
-	else:
-		ss_url = args.ss_qrcode_url
+	ss_url = args.ss_qrcode_url
 
 	## get the ss-uri string 
 	if ss_url.startswith(ssr_prefix) :
 		ss_uri = ss_url
 	else:
-		print("begin to download :[{}".format(ss_url))
-		ss_filename = wget.download( ss_url )
-		image = decode_qrcode( ss_filename)
-		for symbol in image:
-			if symbol.data.startswith(ssr_prefix ) :
-				ss_uri = symbol.data
-				os.remove(ss_filename)
-				break
-
+		print("invalid ssr url,it should be started with ssr://")
+		sys.exit(1)
+	
 
 	## decode the ss-uri string
-	if ss_uri.startswith(ssr_prefix) :
-		conf_json = decode_ssr_uri( ss_uri )
+	conf_json = decode_ssr_uri( ss_uri )
 
 
 	## 5.generate config.json file
@@ -158,7 +136,7 @@ def main_task():
 	file_obj = open( args.config , 'w')
 	
 	jsonfile = json.dumps(conf_json,sort_keys=True, indent=4)
-	print("jsonfile:".format(jsonfile))
+	print("jsonfile:\n{0}\n".format(jsonfile))
 	file_obj.write(jsonfile)
 	file_obj.close()
 
