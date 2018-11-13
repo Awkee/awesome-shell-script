@@ -1,0 +1,98 @@
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" 作者: awkee
+" Email: xiaoyu0720@gmail.com
+" Create Date: 2018/11/13 
+" 源码地址: https://github.com/Awkee/awesome-shell-script.git
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" tabs and spaces handling
+
+"set expandtab  " <--此选项自动扩展tab为空格符号,建议不要默认开启
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+
+" show line number
+set nu
+
+" VIM 全局默认编码规则
+set encoding=utf-8
+
+" VIM 优先支持文件编码规则
+set fileencodings=utf-8,ucs-bom,shift-jis,gb18030,gbk,gb2312,cp936
+
+" 在被分割的窗口间显示空白，便于阅读
+set fillchars=vert:\ ,stl:\ ,stlnc:\
+
+"vim windows split navigations
+set splitbelow
+set splitright
+map tsp :sp
+map tsv :sv 
+map tvs :vs 
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
+
+" tab page navigation mappings
+map tn :tabnext<CR>
+map tp :tabprevious<CR>
+map tc :tabclose<CR> 
+map tm :tabmove 
+map tt :tabnew 
+map ts :tab split<CR>
+
+map <C-Right> :tabn<CR>
+imap <C-Right> <ESC>:tabn<CR>
+map <C-Left> :tabp<CR>
+imap <C-Left> <ESC>:tabp<CR>
+
+" 自动保存视图
+au BufWinLeave *.* silent mkview
+au BufWinEnter *.* silent loadview
+
+
+" Enable folding
+" manual,indent,expr,marker,syntax,diff
+" shortcut , za:auto,zR:OpenAll,zM:CloseAll,zO:OpenAllInCursor,zC:CloseAllInCursor,zn:FoldingNone,zN:FoldingNormal , more help for fold-commands
+set foldmethod=indent
+set foldnestmax=10
+set foldenable
+set foldlevel=99
+set foldcolumn=3
+map <F10> :set foldmethod=manual<CR>za<CR>
+
+set magic
+set confirm
+set nobackup
+set noswapfile
+
+" 使回格键（backspace）正常处理indent, eol, start等
+set backspace=2
+" 允许backspace和光标键跨越行边界
+set whichwrap+=<,>,h,l
+
+" 命令行（在状态行下）的高度，默认为1，这里是2
+set cmdheight=2
+set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}   "状态行显示的内容
+set laststatus=2    " 启动显示状态行(1),总是显示状态行(2)
+
+set mouse=v
+set selection=exclusive
+set selectmode=mouse,key
+
+" 高亮显示匹配的括号
+set showmatch
+
+" 增强模式中的命令行自动完成操作
+set wildmenu
+
+"代码补全
+set completeopt=preview,menu
+
+" 设置当文件被改动时自动载入
+"set autoread
+
+
+" End of .vimrc
