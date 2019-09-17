@@ -52,3 +52,10 @@ echo 'export PATH="$PATH:~/bin:."' >> ~/.bashrc
 重启ss服务: `autoss.py -d restart`
 
 指定shadowsocks二维码URL地址并重启方法: `autoss.py  -d restart http://xxxx/qr/abc.png`
+
+## 5. 增加 163.py Python3编写的工具下载 音乐文件
+
+查看帮助信息: `163.py -h`
+使用方法： `163.py https://music.163.com/playlist?id=123456789'
+
+
