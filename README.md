@@ -58,4 +58,10 @@ echo 'export PATH="$PATH:~/bin:."' >> ~/.bashrc
 查看帮助信息: `163.py -h`
 使用方法： `163.py https://music.163.com/playlist?id=123456789'
 
+## 6. 增加提取猪肉价格脚本示例工具 get_price.sh
+
+查看帮助信息: `get_price.sh`
+使用方法： `get_price.sh http://www.zhujiage.com.cn/article/201910/1024265 11`
+
+
 
