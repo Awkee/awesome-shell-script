@@ -1,0 +1,19 @@
+#!/usr/bin/awk -f
+
+# histgram
+# input : [0-100]数字
+# output: 分数分布图
+
+/^[0-9]+$/{ x[ int($1/10) ]++ ; total++; }
+$1>=60{ pass++}
+END{
+    for(i = 0 ; i < 10; i++)
+        printf(" %2d - %2d: %3d %s\n", 10*i , 10*i+9, x[i], rep(int(x[i]/total*100),"+"))
+    printf("100:      %3d %s\n", x[10], rep(int(x[10]/total*100),"+"))
+	printf("total: %3d ,pass: %3d, pecent: %4.02f%\n", total , pass , pass/total*100);
+}
+function rep(n, s, t){
+    while( n-- > 0)
+        t = t s
+    return t
+}

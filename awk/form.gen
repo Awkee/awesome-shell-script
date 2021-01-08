@@ -1,0 +1,27 @@
+#!/usr/bin/awk -f
+# form.gen
+#    input: 
+#       letter.txt 
+#       data lines with country:population:area:population density format
+#    output:
+#       one form letter per data line
+BEGIN{
+	FS=":"
+	if( getline < "letter.text" > 0)
+		form[++n] = $0
+	else {
+		print "file letter.text maybe doesn't exist!" > "/dev/stderr"
+		exit -1
+	}
+	while( getline < "letter.text" > 0)
+		form[++n] = $0
+}
+NF != 4 { print "input format  error! \neg:Canada:25:3.852:6.5"}
+NF == 4{ 
+	for(i = 1; i <= n; i++) {
+		temp = form[i]
+		for(j = 1; j <= NF; j++)
+			gsub("#"j, $j, temp)
+		print temp
+	}
+}
