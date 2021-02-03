@@ -1,0 +1,29 @@
+#
+# Author: learnhardcn
+# blog: https://www.learnhard.cn
+# 配置默认zsh主题，推荐 agnoster 
+# 了解更多主题：https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
+
+ZSH_THEME="agnoster"
+
+plugins=(
+  git
+)
+export ZSH="$HOME/.oh-my-zsh"
+source $ZSH/oh-my-zsh.sh
+
+alias l='ls -l'
+alias la='ls -la'
+alias ll='ls -lh'
+
+# 默认vi编辑器
+set -o vi
+
+# 设置fcitx输入法
+
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS="@im=fcitx"
+
+# . /path/to/your/devel_profile
+
