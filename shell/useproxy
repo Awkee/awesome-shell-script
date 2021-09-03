@@ -1,0 +1,68 @@
+#!/bin/sh
+# 使用代理执行命令工具
+# use proxy to run command scripts tool
+
+local_lang=$(echo $LANG|awk -F'[=.]' '/^LANG/{print $2}')
+
+run_command() {
+    host="$1"
+    export HTTP_PROXY="${host}"
+    export HTTPS_PROXY="${host}"
+    shift 1
+
+    $@
+
+}
+
+usage() {
+    cat <<END
+Usage:
+    `basename $0` [-s|-d] -l ip/host -p portnum
+Params:
+    -s ： 使用代理类型为HTTP类型代理，默认时为socks类型代理.
+    -d ： 使用代理进行DNS解析，代理类型设置为 socks5h
+    
+    -l ip/host : 设置代理服务器IP地址或者域名地址,默认为本地回环地址127.0.0.1
+    -p portnum : 设置代理服务器端口号,默认1080
+
+END
+}
+ip_addr="127.0.0.1"
+port="1080"
+proto="socks"
+while getopts dh::l:p: arg_val
+do
+    case "$arg_val" in
+        p)
+            port="$OPTARG"
+            ;;
+        l)
+            ip_addr="$OPTARG"
+            ;;
+        d)
+            # use DNS
+            proto="socks5h"
+            ;;
+        t)
+            # use HTTP
+            proto="http"
+            ;;
+        *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+shift $((OPTIND -1))
+
+if [ "$#" = "0" ] ; then
+    echo "What to do? 总该执行点什么命令吧?"
+    exit 1
+fi
+
+host="${proto}://$ip_addr:$port"
+
+echo "using proxy： [$host]"
+run_command $host $@
+
