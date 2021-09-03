@@ -55,7 +55,9 @@ $ useproxy -d  wget -c https://yt.be.xxxxx
 如果你使用Bash，就在`$HOME/.bashrc`里加入如下命令，zsh可以在`$HOME/.zshrc`里添加:
 ```bash
 alias useproxy='HTTP_PROXY=socks5://127.0.0.1:1080  HTTPS_PROXY=socks5://127.0.0.1:1080'
-
+```
+来看看使用方法,跟上面的方法一样：
+```bash
 # 执行示例
 $ useproxy curl https://httpbin.org/ip
 ...
