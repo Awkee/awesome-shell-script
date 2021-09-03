@@ -1,8 +1,6 @@
 # awesome-shell-script
 汇总自己写过的shell脚本工具
 
-[TOC]
-
 
 - awk脚本合集
 - dotfiles配置
@@ -22,7 +20,7 @@ Awk目录下保存了很多的Awk脚本工具，如果你想学习Awk脚本编�
 
 ## Shell脚本工具
 
-### useproxy
+### useproxy-在你想使用代理时使用它
 > 执行命令时希望使用代理怎么办？ 使用useproxy脚本就可以了。
 
 有时候，git 命令 或者 wget 命令需要使用代理下载数据时怎么办？安装个 proxychains4 工具？没必要，写个脚本就够用了。看看怎么用吧:
