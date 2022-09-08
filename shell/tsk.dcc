@@ -75,8 +75,9 @@ dcc_field_list="272,Session-Id,Origin-Host,3GPP-Charging-Id,CC-Request-Type,CC-R
 i=1
 for cap_file in $@
 do
+	str_options=" -o tcp.desegment_tcp_streams:FALSE "
 	if [ "$out_flag" = "1" ] ; then
-		str_options=" -w ${str_out_file_tmp}.${i}.cap"
+		str_options="${str_options} -w ${str_out_file_tmp}.${i}.cap"
 	fi
 	run_cmd="tshark -r $cap_file ${str_options} -d tcp.port==${port_address},diameter -q -z diameter,avp,${dcc_field_list}  ${str_filter}"
 #	[[ ! -z "$str_session_id" ]]  && run_cmd="${run_cmd} \| grep \"$str_session_id\""
@@ -136,6 +137,9 @@ do
 		;;
 		dwr)
 			tshark ${str_options} -r $cap_file -d tcp.port==${port_address},diameter -V -q -z diameter,avp,280 | egrep --color 'Command Code|Response|AVP:|^Diameter|^Internet|^Transmission'
+		;;
+		iostat)
+			tshark ${str_options} -r $cap_file -d tcp.port==${port_address},diameter -q -z io,stat,15,"COUNT(diameter)diameter && diameter.flags.request == 1","COUNT(diameter)diameter && diameter.flags.request == 0","MAX(diameter.resp_time)diameter.resp_time","MAX(diameter.length)diameter.length","LOAD(diameter.resp_time)diameter.resp_time"
 		;;
 		*)
 		usage ;;
