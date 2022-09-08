@@ -1,0 +1,56 @@
+#!/bin/bash
+
+usage()
+{
+cat <<END
+usage:
+	`basename $0`  -s sid_list_file -o output_file_prefix  cap_file1 [ cap_file2 ....]
+END
+}
+
+if [ "$#" = "0" ] ; then
+	usage
+	exit 0
+fi
+out_file="outfile"
+sid_list=""
+while getopts eqh:s:o: arg_val
+do
+    case $arg_val  in
+        s)
+                ## 设置sid列表文件 ##
+                sid_list="$OPTARG"
+        ;;
+        o)
+                ## 设置 输出文件名前缀 ##
+                out_file="$OPTARG"
+        ;;
+		h)
+			usage
+			exit 0
+		;;
+		*)
+			usage
+			echo "invalid params:[$arg_val], [$OPTARG]"
+			exit 0;
+        ;;
+	esac
+done
+
+shift $(($OPTIND - 1 ))
+
+if [ ! -r "$sid_list" ] ; then
+	usage
+	echo "[$sid_list] can't be read!"
+	exit 0
+fi
+
+j=0;
+for i in `cat ${sid_list}`
+do
+        let j=$j+1
+        tsk.dcc -s "$i" -o ${out_file}.$j  $@
+done
+
+mergecap -w merge_${out_file}.cap  ${out_file}.*.cap
+

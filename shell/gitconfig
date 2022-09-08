@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+#########################################################
+# 功能:  自动化配置 git 规范化commit 脚本
+# 作者： Awkee
+# 日期： 2022-08-12
+# 邮箱:  xiaoyu0720@gmail.com
+#########################################################
+
+pre_check() {
+    #安装前检测是否已经安装了npm
+    npm -v > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "npm is not installed, please install npm first"
+        echo "install nodejs: https://nodejs.org/en/download/"
+        exit 1
+    fi
+    ver=$(npm -v | cut -d. -f1)
+    if [ $ver -lt 7 ]; then
+        echo "npm version is less than 7, please upgrade npm first"
+        echo "upgrade npm: npm install -g npm"
+        exit 1
+    fi
+    git --version > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "git is not installed, please install git first"
+        echo "install git: https://git-scm.com/downloads"
+        exit 1
+    fi
+    user_name=$(git config --global user.name)
+    if [ -z "$user_name" ]; then
+        echo "git user.name is not set, please set it first"
+        exit 1
+    fi
+    user_email=$(git config --global user.email)
+    if [ -z "$user_email" ]; then
+        echo "git user.email is not set, please set it first"
+        exit 1
+    fi
+    
+}
+
+gen_changelog_config_file() {
+    echo -n "Ly8g5paH5Lu25ZCNOiBjaGFuZ2Vsb2cuY29uZmlnLmpzIAovLyDkvZznlKg6IGNvbW1pdCDop4TojIPljJbphY3nva4KLy8g5Y+C6ICD5paH5qGj77yaaHR0cHM6Ly9naXRodWIuY29tL3N0cmVhbWljaC9naXQtY3oKCm1vZHVsZS5leHBvcnRzID0gewogIGRpc2FibGVFbW9qaTogdHJ1ZSwKICAvLyBmb3JtYXQ6ICd7dHlwZX17c2NvcGV9OiB7ZW1vaml9e3N1YmplY3R9JywKICBsaXN0OiBbJ3Rlc3QnLCAnZmVhdCcsICdmaXgnLCAnY2hvcmUnLCAnZG9jcycsICdyZWZhY3RvcicsICdzdHlsZScsICdjaScsICdwZXJmJywgJ2J1aWxkJ10sCiAgbWF4TWVzc2FnZUxlbmd0aDogNzIsCiAgbWluTWVzc2FnZUxlbmd0aDogMywKICBxdWVzdGlvbnM6IFsndHlwZScsICdzY29wZScsICdzdWJqZWN0JywgJ2JvZHknLCAnYnJlYWtpbmcnLCAnaXNzdWVzJywgJ2xlcm5hJ10sCiAgc2NvcGVzOiBbXSwKICB0eXBlczogewogICAgY2hvcmU6IHsKICAgICAgZGVzY3JpcHRpb246ICfkuIDkupvkuI7kuLvopoHkuJrliqHml6DlhbPnmoTmnoTlu7ov5bel56iL5L6d6LWWL+W3peWFt+etieWKn+iDveaUueWKqCcsCiAgICAgIGVtb2ppOiAn8J+klicsCiAgICAgIHZhbHVlOiAnY2hvcmUnCiAgICB9LAogICAgY2k6IHsKICAgICAgZGVzY3JpcHRpb246ICdDSeaMgee7rembhuaIkOebuOWFs+WPmOabtCcsCiAgICAgIGVtb2ppOiAn8J+OoScsCiAgICAgIHZhbHVlOiAnY2knCiAgICB9LAogICAgZG9jczogewogICAgICBkZXNjcmlwdGlvbjogJ+aWh+aho+abtOaWsCjlpoLvvJpSRUFETUUpJywKICAgICAgZW1vamk6ICfinI/vuI8nLAogICAgICB2YWx1ZTogJ2RvY3MnCiAgICB9LAogICAgZmVhdDogewogICAgICBkZXNjcmlwdGlvbjogJ+aWsOeahOeJueaApycsCiAgICAgIGVtb2ppOiAn8J+OuCcsCiAgICAgIHZhbHVlOiAnZmVhdCcKICAgIH0sCiAgICBmaXg6IHsKICAgICAgZGVzY3JpcHRpb246ICdCVUfkv67lpI0nLAogICAgICBlbW9qaTogJ/CfkJsnLAogICAgICB2YWx1ZTogJ2ZpeCcKICAgIH0sCiAgICBwZXJmOiB7CiAgICAgIGRlc2NyaXB0aW9uOiAn5LyY5YyW5LqG5oCn6IO955qE5Luj56CB5pS55YqoJywKICAgICAgZW1vamk6ICfimqHvuI8nLAogICAgICB2YWx1ZTogJ3BlcmYnCiAgICB9LAogICAgcmVmYWN0b3I6IHsKICAgICAgZGVzY3JpcHRpb246ICfkuIDkupvku6PnoIHnu5PmnoTkuIrkvJjljJbvvIzml6LkuI3mmK/mlrDnibnmgKfkuZ/kuI3mmK/kv64gQnVnJywKICAgICAgZW1vamk6ICfwn5KhJywKICAgICAgdmFsdWU6ICdyZWZhY3RvcicKICAgIH0sCiAgICByZWxlYXNlOiB7CiAgICAgIGRlc2NyaXB0aW9uOiAn5Y+R5biDUmVsZWFzZeeJiOacrOaPkOS6pCcsCiAgICAgIGVtb2ppOiAn8J+PuScsCiAgICAgIHZhbHVlOiAncmVsZWFzZScKICAgIH0sCiAgICBzdHlsZTogewogICAgICBkZXNjcmlwdGlvbjogJ+S7o+eggeeahOagt+W8j+e+juWMlu+8jOS4jea2ieWPiuWIsOWKn+iDveS/ruaUueetiScsCiAgICAgIGVtb2ppOiAn8J+ShCcsCiAgICAgIHZhbHVlOiAnc3R5bGUnCiAgICB9LAogICAgdGVzdDogewogICAgICBkZXNjcmlwdGlvbjogJ+aWsOWinuaIluS/ruaUueW3suacieeahOa1i+ivleS7o+eggScsCiAgICAgIGVtb2ppOiAn8J+SjScsCiAgICAgIHZhbHVlOiAndGVzdCcKICAgIH0sCiAgICBidWlsZDogewogICAgICBkZXNjcmlwdGlvbjogJ+W9seWTjeaehOW7uuezu+e7n+aIluWklumDqOS+nei1lumhueeahOabtOaUue+8iOekuuS+i+iMg+WbtO+8mmd1bHDjgIFicm9jY29saeOAgW5wbe+8iScsCiAgICAgIGVtb2ppOiAn8J+SjScsCiAgICAgIHZhbHVlOiAnYnVpbGQnCiAgICB9CiAgfQp9Owo=" | base64 -d
+}
+
+gen_commitlint_config_file() {
+    echo -n "bW9kdWxlLmV4cG9ydHMgPSB7CiAgICBleHRlbmRzOiBbJ0Bjb21taXRsaW50L2NvbmZpZy1jb252ZW50aW9uYWwnXSwKICAgIHJ1bGVzOiB7CiAgICAgICAgLy8gbGV2ZWxbMC4uMl06IDDooajnpLrnpoHnlKjop4TliJnvvIwx5Li66K2m5ZGK77yMMuS4uumUmeivrwogICAgICAgIC8vIEFwcGxpYWJsZSA6IGFsd2F5cyDpgILnlKjmraTop4TliJnvvIwgbmV2ZXLlj43ovazop4TliJkKICAgICAgICAvLyBWYWx1ZSDnlKjkuo7mraTop4TliJnnmoTlgLwKICAgICAgICAnYm9keS1sZWFkaW5nLWJsYW5rJzogWzIsICdhbHdheXMnXSwgLy8gYm9keSDlvIDlp4vkuo7nqbrnmb3ooYwKICAgICAgICAnaGVhZGVyLW1heC1sZW5ndGgnOiBbMiwgJ2Fsd2F5cycsIDcyXSwgLy8gaGVhZGVyIOWtl+espuacgOWkp+mVv+W6puS4uiA3MgogICAgICAgICdzdWJqZWN0LWZ1bGwtc3RvcCc6IFswLCAnbmV2ZXInXSwgLy8gc3ViamVjdCDnu5PlsL7kuI3liqAgJy4nCiAgICAgICAgJ3R5cGUtZW1wdHknOiBbMiwgJ25ldmVyJ10sIC8vIHR5cGXlrZfmrrXkuI3lj6/ku6XkuLrnqboKICAgICAgICAndHlwZS1lbnVtJzogWzIsICdhbHdheXMnLCBbCiAgICAgICAgICAgICdmZWF0JywgLy8g5paw54m55oCn44CB6ZyA5rGCCiAgICAgICAgICAgICdmaXgnLCAvLyBidWcg5L+u5aSNCiAgICAgICAgICAgICdkb2NzJywgLy8g5paH5qGj5YaF5a655pS55YqoCiAgICAgICAgICAgICdzdHlsZScsIC8vIOS4jeW9seWTjeS7o+eggeWQq+S5ieeahOaUueWKqO+8jOS+i+WmguWOu+aOieepuuagvOOAgeaUueWPmOe8qei/m+OAgeWinuWIoOWIhuWPtwogICAgICAgICAgICAncmVmYWN0b3InLCAvLyDku6PnoIHph43mnoQKICAgICAgICAgICAgJ3Rlc3QnLCAvLyDmt7vliqDmiJbkv67mlLnmtYvor5UKICAgICAgICAgICAgJ2Nob3JlJywgLy8g5LiN5L+u5pS5IHNyYyDmiJbogIUgdGVzdCDnmoTlhbbkvZnkv67mlLnvvIzkvovlpoLmnoTlu7rov4fnqIvmiJbovoXliqnlt6XlhbfnmoTlj5jliqgKICAgICAgICAgICAgJ3JldmVydCcsIC8vIOaJp+ihjCBnaXQgcmV2ZXJ0IOaJk+WNsOeahCBtZXNzYWdlCiAgICAgICAgICAgICdidWlsZCcsIC8vIOW9seWTjeaehOW7uuezu+e7n+aIluWklumDqOS+nei1lumhueeahOabtOaUue+8iOekuuS+i+iMg+WbtO+8mmd1bHDjgIFicm9jY29saeOAgW5wbe+8iQogICAgICAgIF1dLAogICAgfQp9Owo="  | base64 -d
+}
+
+install_commitizen() {
+
+    if which cz > /dev/null; then
+        echo "commitizen 已经安装!"
+        return 0
+    fi
+    echo "安装 commitizen ..."
+    npm install -g commitizen
+    echo "安装 commitizen 成功!"
+}
+
+install_cz_changelog() {
+    if  grep "cz-conventional-changelog" "$HOME/.czrc" > /dev/null 2>&1 ; then
+        echo "cz-conventional-changelog 已经安装!"
+    else
+        echo "安装 cz-conventional-changelog ..."
+        npm install -g cz-conventional-changelog
+        echo "安装 cz-conventional-changelog 成功!"
+        echo "添加 cz-conventional-changelog 到 .czrc"
+        mv $HOME/.czrc $HOME/.czrc.bak
+        echo '{ "path": "cz-conventional-changelog" }' > "$HOME/.czrc"
+        echo "添加 cz-conventional-changelog 到 .czrc 成功!"
+    fi
+}
+
+install_commitlint() {
+    if which commitlint > /dev/null 2>&1; then
+        echo "commitlint 已经安装!"
+    else
+        echo "安装 commitlint ..."
+        npm install -g @commitlint/{cli,config-conventional}
+        echo "安装 commitlint 成功!"
+    fi
+}
+
+config_cz() {
+
+    install_commitizen
+    install_cz_changelog
+    install_commitlint
+
+    echo "初始化 commitizen:"
+    commitizen init cz-conventional-changelog --save-dev --save-exact --force
+
+    echo "检测 .gitignore 中是否过滤掉了 node_modules目录"
+    if grep "node_modules" "./.gitignore" > /dev/null 2>&1 ; then
+        echo "node_modules is already in .gitignore"
+    else
+        echo "添加 node_modules 到 .gitignore"
+        echo "node_modules" >> "./.gitignore"
+    fi
+
+    if [ -f "changelog.config.js" ] ; then
+        echo "changelog.config.js 已存在"
+    else
+        echo "生成 changelog.config.js"
+        gen_changelog_config_file > changelog.config.js
+    fi
+
+    if [ -f "./commitlint.config.js" ] ; then
+        echo "commitlint.config.js 已存在"
+    else
+        echo "生成 commitlint.config.js"
+        gen_commitlint_config_file > commitlint.config.js
+    fi
+
+    if  grep commitlint "./.husky/commit-msg" >/dev/null 2>&1 ; then
+        echo "husky已经安装，commitlint已经配置"
+    else
+        echo "安装 husky:"
+        npm install --save-dev husky
+        echo "激活钩子:"
+        npx husky install
+        echo "添加 commitlint 钩子:"
+        npx husky add .husky/commit-msg 'npx --no -- commitlint --edit $1'
+    fi
+    echo "配置完毕!"
+    echo "请修改内容后执行 git cz 提交命令验证配置是否正确"
+}
+
+usage() {
+    cat <<END
+Usage:
+    自动化配置 git commitlint 和 commitizen
+
+    `basename $0` config
+
+END
+}
+
+pre_check
+
+case $1 in
+    config)
+        config_cz
+        ;;
+    *)
+        usage
+        ;;
+esac

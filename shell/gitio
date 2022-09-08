@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+###########################################3
+#
+#  Github短地址转换器
+#
+###########################################3
+
+
+SHORT_URL="https://git.io"
+URL=""  # 长URL地址
+CODE="" # 短地址代码
+
+usage() {
+    cat <<END
+使用帮助:
+    Github 地址生成短址工具
+
+    `basename $0` [-c code] url
+
+参数信息:
+    -c code : 可选参数，设置短地址代码，例如 code=xyz ,将生成短地址为 "https://git.io/xyz"
+    url     : 需要转换的长地址
+
+END
+}
+
+while getopts h:c: arg_val
+do
+    case "$arg_val" in
+        c)
+            CODE="$OPTARG"
+            ;;
+        *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+shift $(($OPTIND - 1 ))
+
+if [ "$#" != "1" ] ; then
+    usage
+    echo
+    echo "没有设置 URL"
+    exit 1
+fi
+
+URL="$1"
+
+cmd="curl ${SHORT_URL} -i -F 'url=${URL}'"
+
+if [ "$CODE" != "" ] ; then
+    cmd="${cmd} -F 'code=${CODE}'"
+fi
+
+echo "执行命令: " 
+bash -c "$cmd"
+
+

@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+API="https://api.github.com"
+SE_API=$API"/search"
+SE_API_REPO=$API"/search/repositories"
+
+
+usage()
+{
+cat <<END
+usage:
+	`basename $0` <action>  [params]
+params:
+	<action> : 要执行的任务
+	[params] : 查询参数信息
+example:
+	`basename $0`  se "topic:spider&sort=stars"	 : 查询spider话题相关的项目
+END
+}
+
+help_search()
+{
+cat <<END
+search/repos:
+	accept: 建议返回结果:"application/vnd.github.v3+json"
+	q: 查询关键词信息，多关键词用+号连接，例如 python+in:spider
+	sort: 排序条件, 可选值:stars,forks,help-wanted-issues,updated, default is bestmatch
+	order: 排序方式，desc 从高到低, asc 从低到高
+	per_page: 每页大小，最大100
+	page: 选取页数
+
+search/users:
+	accept: 建议返回结果:"application/vnd.github.v3+json"
+	q: 查询关键词信息，多关键词用+号连接，例如 python+in:spider
+
+	q 关键词组合条件：
+		type:user/org
+		user:xiaoming   : 查找xiaoming
+		kenya in:login : 用户的登录名包含kenya
+		bolton in:name : 用户的名字包含bolton
+		data in:email :  用户的email包含data
+		repos:>9000    ：用户的项目数大于9000个
+		bert repos:10..30: 用户名或真名包含bert并且项目数在10到30之间
+		language:javascript : 用户的项目有使用javascript
+		location:russia	    : 用户的位置是russia
+		jenny language:javascript in:fullname : 匹配用户的项目中有使用javascript编写并且全名为"jenny"
+		followers:>=1000    : 用户的关注者超过1000人的用户
+		sparkle followers:1..10 : 用户的关注者在1到10人，并且关注者中包含一个包含名为sparkle的用户
+END
+}
+
+search(){
+	if [ "$#" != "1" ] ; then
+		echo "param_count:[$#], params:[$@]"
+		help_search
+		return 1
+	fi
+	# se_type="$1"
+	q="$1"
+	se_header="Accept: application/vnd.github.v3+json"
+	url="${SE_API_REPO}"
+	if [ "$q" != "" ] ; then
+		url="${url}?q=$q"
+	fi
+	echo curl "${url}" -H "${se_header}"
+	curl "${url}" -H "${se_header}"
+}
+
+if [ "$#" != "2" ] ; then
+	usage
+	exit 0
+fi
+
+case "$1" in
+	se|seach)
+		search $2
+		;;
+	*)
+		usage
+		;;
+esac

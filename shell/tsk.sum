@@ -1,0 +1,54 @@
+#!/bin/bash
+
+usage()
+{
+	cat <<END
+		Usage:
+		`basename $0` <抓包文件路径> 
+
+		DCC消息抓包文件流量分析工具, tshark命令分析脚本 
+
+END
+}
+
+if [ "$#" -lt "1" ] ; then
+usage
+exit 0
+fi
+
+port_address="1024-20000"
+
+### 显示标题 ###
+echo "session_id msisdn imsi_number rating_group total_byte total_MB"
+{
+	for cap_file in $@
+	do
+		tshark -r $cap_file  -d tcp.port==${port_address},diameter -q -z diameter,avp,272,Session-Id,CC-Request-Type,CC-Request-Number,Subscription-Id-Data,Result-Code,Rating-Group,CC-Total-Octets,CC-Input-Octets,CC-Output-Octets,3GPP-Reporting-Reason,3GPP-Charging-Id,3GPP-Charging-Characteristics,3GPP-RAT-Type | grep "is_request='1'"
+	done
+} | awk '{ 
+	gsub("'\''","");
+	out_str=""
+	for( i = 1; i <=NF; i++){ 
+		split($i,arr,"="); 
+		if( $i~/Session-Id/)  out_str=arr[2];
+		if( $i~/Subscription-Id-Data/)  out_str=out_str" "arr[2]
+		if( $i~/CC-Total-Octets/) {	dataflow=arr[2]; out_flag=1;  } 
+		if( $i~/Rating-Group/ && out_flag == 1)	{ 
+			out_flag=0; 
+			printf("%s %s %.0f\n", out_str, arr[2], dataflow ); 
+		}
+	}
+}' | awk '{
+	idx=$1
+		for( i = 2; i < NF; i++) { idx = idx" "$i }
+	flow=$NF;
+	tot[idx] += flow;
+	total  += flow;
+}END{
+
+	for( i in tot){
+		printf("%s %15.0f %10.2f\n", i , tot[i], tot[i]/1024/1024 );
+	}
+	printf("total: %.0f Byte %.2f MB\n", total, total/1024/1024 );
+}' |sort
+
